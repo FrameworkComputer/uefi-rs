@@ -71,6 +71,7 @@ pub mod debug;
 pub mod device_path;
 pub mod driver;
 pub mod loaded_image;
+pub mod shell_params;
 pub mod media;
 pub mod network;
 pub mod pi;
