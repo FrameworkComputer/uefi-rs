@@ -69,8 +69,8 @@ pub struct Shell {
 
     pub execution_break: Event,
 
-    major_version: u32,
-    minor_version: u32,
+    pub major_version: u32,
+    pub minor_version: u32,
     register_guid_name: usize,
     get_guid_name: usize,
     get_guid_from_name: usize,
