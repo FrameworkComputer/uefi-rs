@@ -2,16 +2,14 @@
 
 use core::{ffi::c_void, mem::MaybeUninit, ptr::NonNull};
 
-use uefi_macros::{unsafe_guid, Protocol};
-
+use crate::proto::unsafe_protocol;
 use crate::{CStr16, Event, Handle, Result, Status};
 
 use super::media::file::FileInfo;
 
 /// TODO
 #[repr(C)]
-#[unsafe_guid("6302d008-7f9b-4f30-87ac-60c9fef5da4e")]
-#[derive(Protocol)]
+#[unsafe_protocol("6302d008-7f9b-4f30-87ac-60c9fef5da4e")]
 pub struct Shell {
     execute: extern "efiapi" fn(
         parent_image_handle: *const Handle,
