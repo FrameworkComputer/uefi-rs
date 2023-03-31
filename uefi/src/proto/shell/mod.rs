@@ -67,7 +67,7 @@ pub struct Shell {
     open_root: usize,
     open_root_by_handle: usize,
 
-    execution_break: Event,
+    pub execution_break: Event,
 
     major_version: u32,
     minor_version: u32,
