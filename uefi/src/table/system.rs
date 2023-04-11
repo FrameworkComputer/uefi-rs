@@ -130,7 +130,7 @@ impl SystemTable<Boot> {
 
     /// Returns the standard output protocol.
     pub fn stdout_handle(&self) -> &Handle {
-        &self.table.stdout_handle
+        unsafe { &(*self.table).stdout_handle }
     }
 
     /// Returns the standard error protocol.
