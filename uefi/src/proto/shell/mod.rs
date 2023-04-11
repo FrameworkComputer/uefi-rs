@@ -9,9 +9,15 @@ use super::media::file::FileInfo;
 
 #[repr(u64)]
 #[derive(Debug)]
+/// Open modes
+///
+/// Can be added together to combine them.
 pub enum FileOpenMode {
+    /// Open file for reading
     Read = 0x0000000000000001,
+    /// Open file for writing
     Write = 0x0000000000000002,
+    /// Create the file if it doesn't exist already
     Create = 0x8000000000000000,
 }
 
@@ -87,9 +93,12 @@ pub struct Shell {
     open_root: usize,
     open_root_by_handle: usize,
 
+    /// Event to check if the user has requested execution to be stopped (CTRL-C)
     pub execution_break: Event,
 
+    /// Major version of the shell
     pub major_version: u32,
+    /// Minor version of the shell
     pub minor_version: u32,
     register_guid_name: usize,
     get_guid_name: usize,
@@ -136,7 +145,9 @@ impl Shell {
         (self.enable_page_break)()
     }
 
+    /// Gets the file information from an open file handle
     // TODO: How do we free this automatically?
+    // Doesn't seem to work!
     pub fn get_file_info(&self, file_handle: ShellFileHandle) -> Option<&FileInfo> {
         let info = (self.get_file_info)(file_handle);
         if info.is_null() {
@@ -146,10 +157,12 @@ impl Shell {
         }
     }
 
+    /// Sets the file information to an opened file handle
     pub fn set_file_info(&self, file_handle: ShellFileHandle, file_info: &FileInfo) -> Result<()> {
         (self.set_file_info)(file_handle, file_info).into()
     }
 
+    /// Opens a file or a directory by file name
     pub fn open_file_by_name(
         &self,
         file_name: &[u16],
@@ -190,6 +203,7 @@ impl Shell {
             .into_with_val(|| unsafe { out_file_handle.assume_init() })
     }
 
+    /// Reads data from the file
     pub fn read_file(&self, file_handle: ShellFileHandle, buffer: &mut [u8]) -> Result<()> {
         let mut read_size = buffer.len();
         (self.read_file)(
@@ -200,6 +214,7 @@ impl Shell {
         .into()
     }
 
+    /// Writes data to the file
     pub fn write_file(&self, file_handle: ShellFileHandle, buffer: &[u8]) -> Result<()> {
         let mut read_size = buffer.len();
         (self.write_file)(
@@ -238,6 +253,7 @@ impl Shell {
         })
     }
 
+    /// Gets the size of a file
     pub fn get_file_size(&self, file_handle: ShellFileHandle) -> Result<u64> {
         let mut file_size: MaybeUninit<u64> = MaybeUninit::zeroed();
         (self.get_file_size)(file_handle, file_size.as_mut_ptr().cast())
