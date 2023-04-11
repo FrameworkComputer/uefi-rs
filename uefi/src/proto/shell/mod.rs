@@ -7,6 +7,14 @@ use crate::{CStr16, Event, Handle, Result, Status};
 
 use super::media::file::FileInfo;
 
+#[repr(u64)]
+#[derive(Debug)]
+pub enum FileOpenMode {
+    Read = 0x0000000000000001,
+    Write = 0x0000000000000002,
+    Create = 0x8000000000000000,
+}
+
 /// TODO
 #[repr(C)]
 #[unsafe_protocol("6302d008-7f9b-4f30-87ac-60c9fef5da4e")]
@@ -41,17 +49,29 @@ pub struct Shell {
     get_page_break: usize,
     get_device_name: usize,
 
-    get_file_info: usize,
-    set_file_info: usize,
-    open_file_by_name: usize,
+    get_file_info: extern "efiapi" fn(file_handle: ShellFileHandle) -> *const FileInfo,
+    set_file_info: extern "efiapi" fn(file_handle: ShellFileHandle, file_info: &FileInfo) -> Status,
+    open_file_by_name: extern "efiapi" fn(
+        path: *const u16,
+        file_handle: *mut ShellFileHandle,
+        open_mode: u64,
+    ) -> Status,
     close_file: extern "efiapi" fn(file_handle: ShellFileHandle) -> Status,
     create_file: extern "efiapi" fn(
         file_name: &CStr16,
         file_attribs: u64,
         out_file_handle: *mut ShellFileHandle,
     ) -> Status,
-    read_file: usize,
-    write_file: usize,
+    read_file: extern "efiapi" fn(
+        file_handle: ShellFileHandle,
+        read_size: &mut usize,
+        buffer: *mut c_void,
+    ) -> Status,
+    write_file: extern "efiapi" fn(
+        file_handle: ShellFileHandle,
+        buffer: &mut usize,
+        buffer: *const c_void,
+    ) -> Status,
     delete_file: extern "efiapi" fn(file_handle: ShellFileHandle) -> Status,
     delete_file_by_name: extern "efiapi" fn(file_name: &CStr16) -> Status,
     get_file_position: usize,
@@ -62,7 +82,7 @@ pub struct Shell {
         out_file_list: *mut *mut ShellFileInfo,
     ) -> Status,
     find_files_in_dir: usize,
-    get_file_size: usize,
+    get_file_size: extern "efiapi" fn(file_handle: ShellFileHandle, size: *mut u64) -> Status,
 
     open_root: usize,
     open_root_by_handle: usize,
@@ -116,6 +136,36 @@ impl Shell {
         (self.enable_page_break)()
     }
 
+    // TODO: How do we free this automatically?
+    pub fn get_file_info(&self, file_handle: ShellFileHandle) -> Option<&FileInfo> {
+        let info = (self.get_file_info)(file_handle);
+        if info.is_null() {
+            None
+        } else {
+            unsafe { info.as_ref() }
+        }
+    }
+
+    pub fn set_file_info(&self, file_handle: ShellFileHandle, file_info: &FileInfo) -> Result<()> {
+        (self.set_file_info)(file_handle, file_info).into()
+    }
+
+    pub fn open_file_by_name(
+        &self,
+        file_name: &[u16],
+        mode: u64,
+    ) -> Result<Option<ShellFileHandle>> {
+        let mut out_file_handle: MaybeUninit<Option<ShellFileHandle>> = MaybeUninit::zeroed();
+        (self.open_file_by_name)(
+            file_name.as_ptr(),
+            out_file_handle.as_mut_ptr().cast(),
+            mode,
+        )
+        // Safety: if this call is successful, `out_file_handle`
+        // will always be initialized and valid.
+        .into_with_val(|| unsafe { out_file_handle.assume_init() })
+    }
+
     /// Closes `file_handle`. All data is flushed to the device and the file is closed.
     ///
     /// Per the UEFI spec, the file handle will be closed in all cases and this function
@@ -138,6 +188,26 @@ impl Shell {
             // Safety: if this call is successful, `out_file_handle`
             // will always be initialized and valid.
             .into_with_val(|| unsafe { out_file_handle.assume_init() })
+    }
+
+    pub fn read_file(&self, file_handle: ShellFileHandle, buffer: &mut [u8]) -> Result<()> {
+        let mut read_size = buffer.len();
+        (self.read_file)(
+            file_handle,
+            &mut read_size,
+            buffer.as_mut_ptr() as *mut c_void,
+        )
+        .into()
+    }
+
+    pub fn write_file(&self, file_handle: ShellFileHandle, buffer: &[u8]) -> Result<()> {
+        let mut read_size = buffer.len();
+        (self.write_file)(
+            file_handle,
+            &mut read_size,
+            buffer.as_ptr() as *const c_void,
+        )
+        .into()
     }
 
     /// TODO
@@ -167,11 +237,19 @@ impl Shell {
             }
         })
     }
+
+    pub fn get_file_size(&self, file_handle: ShellFileHandle) -> Result<u64> {
+        let mut file_size: MaybeUninit<u64> = MaybeUninit::zeroed();
+        (self.get_file_size)(file_handle, file_size.as_mut_ptr().cast())
+            // Safety: if this call is successful, `out_file_handle`
+            // will always be initialized and valid.
+            .into_with_val(|| unsafe { file_size.assume_init() })
+    }
 }
 
 /// TODO
 #[repr(transparent)]
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct ShellFileHandle(NonNull<c_void>);
 
 /// TODO
