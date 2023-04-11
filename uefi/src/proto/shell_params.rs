@@ -1,8 +1,8 @@
 //! `ShellParams` protocol
 
-use core::ffi::c_void;
 use crate::proto::unsafe_protocol;
 use crate::{CStr16, Char16};
+use core::ffi::c_void;
 
 #[cfg(feature = "alloc")]
 use alloc::string::String;
@@ -12,7 +12,7 @@ use alloc::vec::Vec;
 
 type ShellFileHandle = *const c_void;
 
-/// The ShellParameters protocol. 
+/// The ShellParameters protocol.
 #[repr(C)]
 #[unsafe_protocol("752f3136-4e16-4fdc-a22a-e5f46812f4ca")]
 pub struct ShellParameters {
@@ -42,4 +42,3 @@ impl ShellParameters {
         args
     }
 }
-
