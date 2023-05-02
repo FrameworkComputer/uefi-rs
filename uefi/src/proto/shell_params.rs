@@ -34,7 +34,7 @@ impl ShellParameters {
     pub fn get_args(&self) -> Vec<String> {
         let mut args = vec![];
         // Skip first one, which is the executable's name
-        for i in 1..self.argc {
+        for i in 0..self.argc {
             let str = unsafe { CStr16::from_ptr(*self.argv.add(i)) };
             let string = str.to_string();
             args.push(string);
