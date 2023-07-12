@@ -182,4 +182,5 @@ pub enum ScanCode: u16 => #[allow(missing_docs)] {
     TOGGLE_DISPLAY  = 0x104,
     RECOVERY        = 0x105,
     EJECT           = 0x106,
+    FWK_POWER_BTN   = 0xE025,
 }}
