@@ -3,7 +3,7 @@
 use core::{ffi::c_void, mem::MaybeUninit, ptr::NonNull};
 
 use crate::proto::unsafe_protocol;
-use crate::{CStr16, Event, Handle, Result, Status};
+use crate::{CStr16, Event, Handle, Result, Status, StatusExt};
 
 use super::media::file::FileInfo;
 
@@ -126,7 +126,7 @@ impl Shell {
             environment,
             out_status.as_mut_ptr(),
         )
-        .into_with_val(|| unsafe { out_status.assume_init() })
+        .to_result_with_val(|| unsafe { out_status.assume_init() })
     }
 
     /// Returns `true` if any script files are currently being processed.
@@ -159,7 +159,7 @@ impl Shell {
 
     /// Sets the file information to an opened file handle
     pub fn set_file_info(&self, file_handle: ShellFileHandle, file_info: &FileInfo) -> Result<()> {
-        (self.set_file_info)(file_handle, file_info).into()
+        (self.set_file_info)(file_handle, file_info).to_result()
     }
 
     /// Opens a file or a directory by file name
@@ -176,7 +176,7 @@ impl Shell {
         )
         // Safety: if this call is successful, `out_file_handle`
         // will always be initialized and valid.
-        .into_with_val(|| unsafe { out_file_handle.assume_init() })
+        .to_result_with_val(|| unsafe { out_file_handle.assume_init() })
     }
 
     /// Closes `file_handle`. All data is flushed to the device and the file is closed.
@@ -184,7 +184,7 @@ impl Shell {
     /// Per the UEFI spec, the file handle will be closed in all cases and this function
     /// only returns [`Status::SUCCESS`].
     pub fn close_file(&self, file_handle: ShellFileHandle) -> Result<()> {
-        (self.close_file)(file_handle).into()
+        (self.close_file)(file_handle).to_result()
     }
 
     /// TODO
@@ -200,7 +200,7 @@ impl Shell {
         (self.create_file)(file_name, file_attribs, out_file_handle.as_mut_ptr().cast())
             // Safety: if this call is successful, `out_file_handle`
             // will always be initialized and valid.
-            .into_with_val(|| unsafe { out_file_handle.assume_init() })
+            .to_result_with_val(|| unsafe { out_file_handle.assume_init() })
     }
 
     /// Reads data from the file
@@ -211,7 +211,7 @@ impl Shell {
             &mut read_size,
             buffer.as_mut_ptr() as *mut c_void,
         )
-        .into()
+        .to_result()
     }
 
     /// Writes data to the file
@@ -222,23 +222,23 @@ impl Shell {
             &mut read_size,
             buffer.as_ptr() as *const c_void,
         )
-        .into()
+        .to_result()
     }
 
     /// TODO
     pub fn delete_file(&self, file_handle: ShellFileHandle) -> Result<()> {
-        (self.delete_file)(file_handle).into()
+        (self.delete_file)(file_handle).to_result()
     }
 
     /// TODO
     pub fn delete_file_by_name(&self, file_name: &CStr16) -> Result<()> {
-        (self.delete_file_by_name)(file_name).into()
+        (self.delete_file_by_name)(file_name).to_result()
     }
 
     /// TODO
     pub fn find_files(&self, file_pattern: &CStr16) -> Result<Option<ShellFileIter>> {
         let mut out_list: MaybeUninit<*mut ShellFileInfo> = MaybeUninit::uninit();
-        (self.find_files)(file_pattern, out_list.as_mut_ptr()).into_with_val(|| {
+        (self.find_files)(file_pattern, out_list.as_mut_ptr()).to_result_with_val(|| {
             unsafe {
                 // safety: this is initialized after this call succeeds, even if it's
                 // null
@@ -259,7 +259,7 @@ impl Shell {
         (self.get_file_size)(file_handle, file_size.as_mut_ptr().cast())
             // Safety: if this call is successful, `out_file_handle`
             // will always be initialized and valid.
-            .into_with_val(|| unsafe { file_size.assume_init() })
+            .to_result_with_val(|| unsafe { file_size.assume_init() })
     }
 }
 
