@@ -135,10 +135,10 @@ impl SystemTable<Boot> {
         unsafe { &mut *(*self.table).stdout.cast() }
     }
 
-    /// Returns the standard output protocol.
-    pub fn stdout_handle(&self) -> &Handle {
-        unsafe { &(*self.table).stdout_handle }
-    }
+    // Returns the standard output protocol.
+    //pub fn stdout_handle(&self) -> &Handle {
+    //    unsafe { &(*self.table).stdout_handle }
+    //}
 
     /// Returns the standard error protocol.
     pub fn stderr(&mut self) -> &mut text::Output {
