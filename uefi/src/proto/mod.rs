@@ -79,7 +79,6 @@ pub mod network;
 pub mod pi;
 pub mod rng;
 pub mod security;
-pub mod shell_params;
 pub mod shell;
 pub mod shell_params;
 pub mod shim;
