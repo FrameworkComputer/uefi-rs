@@ -142,8 +142,7 @@ pub struct ListEntry {
 }
 
 // TODO: Already defined in uefi/src/proto/media/file/info.rs
-use ptr_meta::Pointee;
-#[derive(Debug, Eq, PartialEq, Pointee)]
+#[derive(Debug, Eq, PartialEq)]
 #[repr(C)]
 pub struct FileInfo {
     size: u64,
@@ -153,7 +152,7 @@ pub struct FileInfo {
     last_access_time: Time,
     modification_time: Time,
     attribute: FileAttribute,
-    file_name: [Char16],
+    file_name: *const Char16,
 }
 
 /// TODO
