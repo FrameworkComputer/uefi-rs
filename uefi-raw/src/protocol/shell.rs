@@ -1,8 +1,8 @@
 use core::{ffi::c_void, ptr::NonNull};
 
-use crate::{guid, Guid, Char16, Event, Handle, Status};
-use crate::time::Time;
 use crate::protocol::file_system::FileAttribute;
+use crate::time::Time;
+use crate::{guid, Char16, Event, Guid, Handle, Status};
 
 #[repr(u64)]
 #[derive(Debug)]
@@ -53,7 +53,8 @@ pub struct ShellProtocol {
     pub get_device_name: usize,
 
     pub get_file_info: extern "efiapi" fn(file_handle: ShellFileHandle) -> *const FileInfo,
-    pub set_file_info: extern "efiapi" fn(file_handle: ShellFileHandle, file_info: &FileInfo) -> Status,
+    pub set_file_info:
+        extern "efiapi" fn(file_handle: ShellFileHandle, file_info: &FileInfo) -> Status,
     pub open_file_by_name: extern "efiapi" fn(
         path: *const u16,
         file_handle: *mut ShellFileHandle,

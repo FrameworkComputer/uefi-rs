@@ -3,7 +3,7 @@
 use core::{ffi::c_void, mem::MaybeUninit};
 
 use crate::proto::unsafe_protocol;
-use crate::{CStr16, Handle, Result, Status, StatusExt};
+use crate::{CStr16, Event, Handle, Result, Status, StatusExt};
 use uefi_raw::protocol::shell::*;
 
 /// The Shell protocol.
@@ -104,10 +104,14 @@ impl Shell {
         // the returned handle can possibly be NULL, so we need to wrap `ShellFileHandle` in an `Option`
         let mut out_file_handle: MaybeUninit<Option<ShellFileHandle>> = MaybeUninit::zeroed();
 
-        (self.0.create_file)(file_name.as_ptr().cast(), file_attribs, out_file_handle.as_mut_ptr().cast())
-            // Safety: if this call is successful, `out_file_handle`
-            // will always be initialized and valid.
-            .to_result_with_val(|| unsafe { out_file_handle.assume_init() })
+        (self.0.create_file)(
+            file_name.as_ptr().cast(),
+            file_attribs,
+            out_file_handle.as_mut_ptr().cast(),
+        )
+        // Safety: if this call is successful, `out_file_handle`
+        // will always be initialized and valid.
+        .to_result_with_val(|| unsafe { out_file_handle.assume_init() })
     }
 
     /// Reads data from the file
@@ -145,19 +149,21 @@ impl Shell {
     /// TODO
     pub fn find_files(&self, file_pattern: &CStr16) -> Result<Option<ShellFileIter>> {
         let mut out_list: MaybeUninit<*mut ShellFileInfo> = MaybeUninit::uninit();
-        (self.0.find_files)(file_pattern.as_ptr().cast(), out_list.as_mut_ptr()).to_result_with_val(|| {
-            unsafe {
-                // safety: this is initialized after this call succeeds, even if it's
-                // null
-                let out_list = out_list.assume_init();
-                if out_list.is_null() {
-                    // no files found
-                    None
-                } else {
-                    Some(ShellFileIter::from_file_info_ptr(out_list))
+        (self.0.find_files)(file_pattern.as_ptr().cast(), out_list.as_mut_ptr()).to_result_with_val(
+            || {
+                unsafe {
+                    // safety: this is initialized after this call succeeds, even if it's
+                    // null
+                    let out_list = out_list.assume_init();
+                    if out_list.is_null() {
+                        // no files found
+                        None
+                    } else {
+                        Some(ShellFileIter::from_file_info_ptr(out_list))
+                    }
                 }
-            }
-        })
+            },
+        )
     }
 
     /// Gets the size of a file

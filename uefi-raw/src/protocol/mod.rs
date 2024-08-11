@@ -16,5 +16,5 @@ pub mod memory_protection;
 pub mod misc;
 pub mod network;
 pub mod rng;
-pub mod shell_params;
 pub mod shell;
+pub mod shell_params;
