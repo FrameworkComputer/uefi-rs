@@ -174,4 +174,19 @@ impl Shell {
             // will always be initialized and valid.
             .to_result_with_val(|| unsafe { file_size.assume_init() })
     }
+
+    /// Major version of the shell
+    pub fn major_version(&self) -> u32 {
+        self.0.major_version
+    }
+
+    /// Minor version of the shell
+    pub fn minor_version(&self) -> u32 {
+        self.0.minor_version
+    }
+
+    /// Event to check if the user has requested execution to be stopped (CTRL-C)
+    pub fn execution_break(&self) -> Option<Event> {
+        unsafe { Event::from_ptr(self.0.execution_break) }
+    }
 }
